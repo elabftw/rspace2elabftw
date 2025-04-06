@@ -10,7 +10,7 @@ From RSpace, you can export your data as `.eln` and use this script to import it
 
 ~~~
 # install dependencies
-uv sync
+uv sync --frozen
 # run program
 uv run main.py /path/to/export.eln
 ~~~
