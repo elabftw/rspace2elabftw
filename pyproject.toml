@@ -1,0 +1,9 @@
+[project]
+name = "rspace2elabftw"
+version = "1.0.0"
+description = "Import RSpace .eln into eLabFTW"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = ["elabapi_python", "rocrate", "beautifulsoup4"]
+[project.optional-dependencies]
+dev = ["isort", "black"]
