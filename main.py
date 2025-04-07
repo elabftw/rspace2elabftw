@@ -74,6 +74,8 @@ def create_entity(tags: List[str], dataset, part_source, root_path) -> int:
     entity_id = int(headers.get("Location").split("/").pop())
     logger.debug(f"Created entity ({datatype}) with id: {entity_id}")
     bodies = []
+    # will map file names to long_name
+    uploads = {}
     for field in xml_data.find("listFields"):
         name = field.find("fieldName").text
         # prevent having all main text start with "Data"
@@ -93,15 +95,23 @@ def create_entity(tags: List[str], dataset, part_source, root_path) -> int:
                     source = image.find("linkFile").text.removeprefix("../")
                     source_path = root_path.joinpath(source)
                     comment = image.find("description").text
-                    uploadsApi.post_upload(
-                        entity_type, entity_id, file=source_path, comment=comment
+                    response_data, status_code, headers = (
+                        uploadsApi.post_upload_with_http_info(
+                            entity_type, entity_id, file=source_path, comment=comment
+                        )
                     )
+                    # get the long_name so we can replace it in the body
+                    upload_id = int(headers.get("Location").split("/").pop())
+                    upload = uploadsApi.read_upload(entity_type, entity_id, upload_id)
+                    uploads[image.find("name").text] = upload.long_name
+
                 # we also need to process the main html to extract equations and insert them normally
                 html = field.find("fieldData").text
                 if not html:
                     continue
                 soup = BeautifulSoup(html, "html.parser")
 
+                # process equations
                 for div in soup.find_all("div", class_="rsEquation mceNonEditable"):
                     # retrieve the data-equation attribute from the div and slap $ around it so it is recognized by Mathjax
                     data_equation = "$" + div.get("data-equation", "").strip() + "$"
@@ -110,9 +120,18 @@ def create_entity(tags: List[str], dataset, part_source, root_path) -> int:
                         obj_tag = div.find("object")
                         if obj_tag:
                             obj_tag.replace_with(data_equation)
+
+                # process images in text
+                for img in soup.find_all("img"):
+                    name = img["src"].split("/").pop()
+                    if not name in uploads:
+                        continue
+                    img["src"] = (
+                        f"app/download.php?f={uploads[name]}&name={name}&storage=1"
+                    )
                 bodies.append(soup.prettify())
 
-    body = { "body": "<br />".join(bodies) }
+    body = {"body": "<br />".join(bodies)}
     if datatype == "NORMAL:TEMPLATE":
         templatesApi.patch_experiment_template(entity_id, body=body)
     elif datatype == "NORMAL":
