@@ -94,7 +94,10 @@ def create_entity(tags: List[str], dataset, part_source, root_path) -> int:
                 for image in field.find("imageList"):
                     source = image.find("linkFile").text.removeprefix("../")
                     source_path = root_path.joinpath(source)
-                    comment = image.find("description").text
+                    comment = ''
+                    commentXml = image.find("description")
+                    if commentXml:
+                        comment = commentXml.text
                     response_data, status_code, headers = (
                         uploadsApi.post_upload_with_http_info(
                             entity_type, entity_id, file=source_path, comment=comment
