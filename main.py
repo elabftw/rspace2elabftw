@@ -96,17 +96,20 @@ def create_entity(tags: List[str], dataset, part_source, root_path) -> int:
                     source_path = root_path.joinpath(source)
                     comment = ''
                     commentXml = image.find("description")
-                    if commentXml:
+                    if commentXml is not None:
                         comment = commentXml.text
-                    response_data, status_code, headers = (
-                        uploadsApi.post_upload_with_http_info(
-                            entity_type, entity_id, file=source_path, comment=comment
+                    if source_path.exists() and source_path.is_file() and os.access(source_path, os.R_OK):
+                        response_data, status_code, headers = (
+                            uploadsApi.post_upload_with_http_info(
+                                entity_type, entity_id, file=source_path, comment=comment
+                            )
                         )
-                    )
-                    # get the long_name so we can replace it in the body
-                    upload_id = int(headers.get("Location").split("/").pop())
-                    upload = uploadsApi.read_upload(entity_type, entity_id, upload_id)
-                    uploads[image.find("name").text] = upload.long_name
+                        # get the long_name so we can replace it in the body
+                        upload_id = int(headers.get("Location").split("/").pop())
+                        upload = uploadsApi.read_upload(entity_type, entity_id, upload_id)
+                        uploads[image.find("name").text] = upload.long_name
+                    else:
+                        logger.error(f'Could not find file to upload at {source_path}')
 
                 # we also need to process the main html to extract equations and insert them normally
                 html = field.find("fieldData").text
