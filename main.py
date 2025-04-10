@@ -23,7 +23,7 @@ LOG_FILE = "import.log"
 urllib3.disable_warnings(category=urllib3.exceptions.InsecureRequestWarning)
 
 
-def setup_logger(log_file=LOG_FILE):
+def setup_logger(log_file):
     # logger stuff: log INFO to console and DEBUG to file
     logger = logging.getLogger("rspace2elabftw")
     logger.setLevel(logging.DEBUG)
@@ -207,7 +207,7 @@ if __name__ == "__main__":
     uploadsApi = elabapi_python.UploadsApi(api_client)
 
     args = parser.parse_args()
-    logger = setup_logger(args.log_file)
+    logger = setup_logger(args.log_file or LOG_FILE)
 
     try:
         import_eln_archive(args.input)
