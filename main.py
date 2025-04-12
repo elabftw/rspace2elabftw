@@ -98,6 +98,10 @@ def create_entity(tags: List[str], dataset, part_source, root_path) -> int:
                     commentXml = image.find("description")
                     if commentXml is not None:
                         comment = commentXml.text
+                    # sometimes the files are in the same folder
+                    if not source_path.exists():
+                        source_path = part_source.parent.joinpath(source)
+
                     if source_path.exists() and source_path.is_file() and os.access(source_path, os.R_OK):
                         response_data, status_code, headers = (
                             uploadsApi.post_upload_with_http_info(
