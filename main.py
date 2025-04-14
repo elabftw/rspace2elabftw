@@ -111,7 +111,7 @@ def create_entity(tags: List[str], dataset, part_source, root_path) -> int:
                         # get the long_name so we can replace it in the body
                         upload_id = int(headers.get("Location").split("/").pop())
                         upload = uploadsApi.read_upload(entity_type, entity_id, upload_id)
-                        uploads[image.find("name").text] = upload.long_name
+                        uploads[image.find("fileName").text] = upload.long_name
                     else:
                         logger.error(f'Could not find file to upload at {source_path}')
 
