@@ -63,7 +63,7 @@ def create_entity(tags: List[str], dataset, part_source, root_path) -> int:
         date = datetime.now(timezone.utc).isoformat()
     dt = datetime.fromisoformat(date)
     formatted_date = dt.strftime('%Y-%m-%d')
-    body = {"title": title, "tags": tags, "date": formatted_date}
+    body = {"title": title, "tags": tags}
     if datatype == "NORMAL:TEMPLATE":
         response_data, status_code, headers = (
             templatesApi.post_experiment_template_with_http_info(body=body)
@@ -150,7 +150,7 @@ def create_entity(tags: List[str], dataset, part_source, root_path) -> int:
                     )
                 bodies.append(soup.prettify())
 
-    body = {"body": "<br />".join(bodies)}
+    body = {"body": "<br />".join(bodies), "date": formatted_date}
     if datatype == "NORMAL:TEMPLATE":
         templatesApi.patch_experiment_template(entity_id, body=body)
     elif datatype == "NORMAL":
