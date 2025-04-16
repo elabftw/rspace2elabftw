@@ -10,6 +10,7 @@ import tempfile
 import xml.etree.ElementTree as ET
 import zipfile
 from pathlib import Path, PosixPath
+from datetime import datetime, timezone
 from typing import List
 
 import elabapi_python
@@ -54,7 +55,12 @@ def create_entity(tags: List[str], dataset, part_source, root_path) -> int:
     logger.info(f"Creating entry: {title}")
     # we add a tag "imported from rspace" to the existing tags list
     tags.append("imported from rspace")
-    body = {"title": title, "tags": tags}
+    date = xml_data.find("creationDate").text
+    if date is None:
+        date = datetime.now(timezone.utc).isoformat()
+    dt = datetime.fromisoformat(date)
+    formatted_date = dt.strftime('%Y-%m-%d')
+    body = {"title": title, "tags": tags, "date": formatted_date}
     if datatype == "NORMAL:TEMPLATE":
         response_data, status_code, headers = (
             templatesApi.post_experiment_template_with_http_info(body=body)
