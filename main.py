@@ -54,6 +54,9 @@ def create_entity(tags: List[str], dataset, part_source, root_path) -> int:
     entity_type = "experiments"
     logger.info(f"Creating entry: {title}")
     # we add a tag "imported from rspace" to the existing tags list
+    folderName = xml_data.find("folderName").text
+    if folderName is not None:
+        tags.append(folderName)
     tags.append("imported from rspace")
     date = xml_data.find("creationDate").text
     if date is None:
