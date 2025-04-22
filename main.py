@@ -155,6 +155,8 @@ def create_entity(tags: List[str], dataset, part_source, root_path) -> int:
 
     body = {"body": "<br />".join(bodies), "date": formatted_date}
     if datatype == "NORMAL:TEMPLATE":
+        # remove date for templates
+        del body["date"]
         templatesApi.patch_experiment_template(entity_id, body=body)
     elif datatype == "NORMAL":
         experimentsApi.patch_experiment(entity_id, body=body)
