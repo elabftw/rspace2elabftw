@@ -142,7 +142,8 @@ def create_entity(tags: List[str], dataset, part_source, root_path) -> int:
 
                 # process images in text
                 for img in soup.find_all("img"):
-                    if "src" not in img:
+                    src = img.get("src")
+                    if not src:
                         logger.warning('Found an img tag with no src attribute. Skipping...')
                         continue
                     name = img["src"].split("/").pop()
