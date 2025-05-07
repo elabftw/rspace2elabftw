@@ -85,6 +85,7 @@ def create_entity(tags: List[str], dataset, part_source, root_path) -> int:
     bodies = []
     # will map file names to long_name
     uploads = {}
+    files = {}
     for field in xml_data.find("listFields"):
         name = field.find("fieldName").text
         # prevent having all main text start with "Data"
@@ -124,6 +125,28 @@ def create_entity(tags: List[str], dataset, part_source, root_path) -> int:
                     else:
                         logger.error(f'Could not find file to upload at {source_path}')
 
+                # Process attachList
+                for file in field.find("attachList"):
+                    source = file.find("linkFile").text.removeprefix("../")
+                    source_path = root_path.joinpath(source)
+                    comment = ''
+                    # sometimes the files are in the same folder
+                    if not source_path.exists():
+                        source_path = part_source.parent.joinpath(source)
+
+                    if source_path.exists() and source_path.is_file() and os.access(source_path, os.R_OK):
+                        response_data, status_code, headers = (
+                            uploadsApi.post_upload_with_http_info(
+                                entity_type, entity_id, file=source_path
+                            )
+                        )
+                        # get the long_name so we can replace it in the body
+                        upload_id = int(headers.get("Location").split("/").pop())
+                        upload = uploadsApi.read_upload(entity_type, entity_id, upload_id)
+                        files[file.find("linkFile").text] = upload.long_name
+                    else:
+                        logger.error(f'Could not find file to upload at {source_path}')
+
                 # we also need to process the main html to extract equations and insert them normally
                 html = field.find("fieldData").text
                 if not html:
@@ -151,6 +174,18 @@ def create_entity(tags: List[str], dataset, part_source, root_path) -> int:
                         continue
                     img["src"] = (
                         f"app/download.php?f={uploads[name]}&name={name}&storage=1"
+                    )
+                # process files in text
+                for a in soup.find_all("a"):
+                    src = a.get("href")
+                    if not src:
+                        logger.warning('Found an a tag with no href attribute. Skipping...')
+                        continue
+                    name = a["href"].split("/").pop()
+                    if not name in files:
+                        continue
+                    a["href"] = (
+                        f"app/download.php?f={files[name]}&name={name}&storage=1"
                     )
                 bodies.append(soup.prettify())
 
